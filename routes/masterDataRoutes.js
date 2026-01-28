@@ -18,6 +18,8 @@ const {
   getAllModelsData,
   getAllEventsData,
   getAllAlertsAndErrorsData,
+  getAllDashboardProjectsData,
+  cloneProjectController,
   getAlertCountData,
   updateAlertsStrikethroughController,
   getDemandForecastFullScreenController,
@@ -46,6 +48,8 @@ router.get("/models", getAllModelsData);
 router.get("/events", getAllEventsData);
 router.get("/getAllAlerts", getAllAlertsAndErrorsData);
 router.get("/getAlertCount", getAlertCountData);
+router.get("/dashboard/projects", getAllDashboardProjectsData);
+router.post("/dashboard/projects/:id/clone", cloneProjectController);
 router.put("/forecast-error/:id", updateAlertsStrikethroughController);
 
 // Get Routes for Compare Models

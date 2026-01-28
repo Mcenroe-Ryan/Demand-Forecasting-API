@@ -27,6 +27,8 @@ const {
   getAllModels,
   getAllEvents,
   getAllAlertsAndErrors,
+  getAllDashboardProjects,
+  cloneProject,
   alertCountService,
   updateAlertsStrikethroughService,
   getDemandForecastFullScreen,
@@ -129,6 +131,65 @@ const getAllAlertsAndErrorsData = async (req, res) => {
   try {
     const result = await getAllAlertsAndErrors();
     res.json(result);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getAllDashboardProjectsData = async (req, res) => {
+  try {
+    const result = await getAllDashboardProjects();
+    res.json(result);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const cloneProjectController = async (req, res) => {
+  const { id } = req.params;
+  const body = req.body || {};
+  const {
+    project_name,
+    project_code,
+    project_description,
+    project_type,
+    project_status,
+    start_date,
+    end_date,
+    created_by,
+    updated_by,
+    created_by_user_id,
+    updated_by_user_id,
+  } = body;
+
+  if (!project_name || !project_code) {
+    return res.status(400).json({
+      error: "`project_name` and `project_code` are required to clone a project.",
+    });
+  }
+
+  try {
+    const result = await cloneProject(id, {
+      project_name,
+      project_code,
+      project_description,
+      project_type,
+      project_status,
+      start_date,
+      end_date,
+      created_by,
+      updated_by,
+      created_by_user_id,
+      updated_by_user_id,
+    });
+
+    if (!result) {
+      return res.status(404).json({ error: "Source project not found." });
+    }
+
+    res.status(201).json(result);
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -344,6 +405,8 @@ module.exports = {
   getAllModelsData,
   getAllEventsData,
   getAllAlertsAndErrorsData,
+  getAllDashboardProjectsData,
+  cloneProjectController,
   getAlertCountData,
   updateAlertsStrikethroughController,
   getDemandForecastFullScreenController,
