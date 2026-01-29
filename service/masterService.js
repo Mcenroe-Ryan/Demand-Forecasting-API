@@ -103,6 +103,85 @@ const getAllAlertsAndErrors = async () => {
   }
 };
 
+const getAllDashboardProjects = async () => {
+  try {
+    const result = await query("select * from prj_project_master");
+    return result.rows;
+  } catch (err) {
+    console.error("Database error:", err);
+    throw err;
+  }
+};
+
+const cloneProject = async (projectId, overrides) => {
+  const {
+    project_name,
+    project_code,
+    project_description,
+    project_type,
+    project_status,
+    start_date,
+    end_date,
+    created_by,
+    updated_by,
+    created_by_user_id,
+    updated_by_user_id,
+  } = overrides;
+
+  const sql = `
+    INSERT INTO prj_project_master (
+      project_name,
+      project_code,
+      project_description,
+      project_type,
+      project_status,
+      start_date,
+      end_date,
+      created_by,
+      created_at,
+      updated_by,
+      updated_at,
+      created_by_user_id,
+      updated_by_user_id
+    )
+    SELECT
+      COALESCE($2, project_name),
+      COALESCE($3, project_code),
+      COALESCE($4, project_description),
+      COALESCE($5, project_type),
+      COALESCE($6, project_status),
+      COALESCE($7, start_date),
+      COALESCE($8, end_date),
+      COALESCE($9, created_by),
+      NOW(),
+      COALESCE($10, updated_by),
+      NOW(),
+      COALESCE($11, created_by_user_id),
+      COALESCE($12, updated_by_user_id)
+    FROM prj_project_master
+    WHERE project_id = $1
+    RETURNING *;
+  `;
+
+  const values = [
+    projectId,
+    project_name,
+    project_code,
+    project_description,
+    project_type,
+    project_status,
+    start_date,
+    end_date,
+    created_by,
+    updated_by,
+    created_by_user_id,
+    updated_by_user_id,
+  ];
+
+  const result = await query(sql, values);
+  return result.rows[0];
+};
+
 const getPlantsByCity = async (city_id) => {
   const result = await query("SELECT * FROM dim_plant WHERE city_id = $1", [
     city_id,
@@ -839,6 +918,8 @@ module.exports = {
   getAllModels,
   getAllEvents,
   getAllAlertsAndErrors,
+  getAllDashboardProjects,
+  cloneProject,
   getForecastAlertData,
   alertCountService,
   updateAlertsStrikethroughService,
