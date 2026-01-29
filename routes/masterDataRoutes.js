@@ -28,6 +28,12 @@ const {
   getDsModelsFeaturesData,
   getDsModelMetricsData,
   getFvaVsStatsData,
+  // work items
+  getWorkItemsController,
+  getWorkItemByIdController,
+  createWorkItemController,
+  updateWorkItemController,
+  deleteWorkItemController,
 } = require("../controllers/masterController");
 const service = require("../service/masterService");
 
@@ -337,5 +343,12 @@ router.post("/generate/all", async (req, res) => {
 });
 
 router.post('/demand-forecast-full-screen', getDemandForecastFullScreenController);
+
+// Work items
+router.get("/work-items", getWorkItemsController);
+router.get("/work-items/:id", getWorkItemByIdController);
+router.post("/work-items", createWorkItemController);
+router.put("/work-items/:id", updateWorkItemController);
+router.delete("/work-items/:id", deleteWorkItemController);
 
 module.exports = router;

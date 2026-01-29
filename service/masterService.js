@@ -896,6 +896,130 @@ const getDemandForecastFullScreen = async (filters) => {
   return rows;
 };
 
+const getWorkItems = async (filters = {}) => {
+  const whereClauses = [];
+  const values = [];
+  let idx = 1;
+
+  const filterMap = {
+    work_item_id: "work_item_id",
+    work_item_number: "work_item_number",
+    project_id: "project_id",
+    status: "status",
+    priority: "priority",
+    work_item_type: "work_item_type",
+    assigned_to_user_id: "assigned_to_user_id",
+    created_by_user_id: "created_by_user_id",
+    updated_by_user_id: "updated_by_user_id",
+    assigned_to: "assigned_to",
+    created_by: "created_by",
+    updated_by: "updated_by",
+  };
+
+  for (const [key, column] of Object.entries(filterMap)) {
+    const val = filters[key];
+    if (val !== undefined && val !== null && val !== "") {
+      whereClauses.push(`${column} = $${idx}`);
+      values.push(val);
+      idx += 1;
+    }
+  }
+
+  if (filters.due_date_from && filters.due_date_to) {
+    whereClauses.push(`due_date BETWEEN $${idx} AND $${idx + 1}`);
+    values.push(filters.due_date_from, filters.due_date_to);
+    idx += 2;
+  }
+
+  const queryText = `
+    SELECT *
+    FROM wrk_work_items
+    ${whereClauses.length ? "WHERE " + whereClauses.join(" AND ") : ""}
+    ORDER BY created_at DESC, work_item_id DESC
+  `;
+
+  const result = await query(queryText, values);
+  return result.rows;
+};
+
+const getWorkItemById = async (id) => {
+  const result = await query(
+    "SELECT * FROM wrk_work_items WHERE work_item_id = $1",
+    [id]
+  );
+  return result.rows[0];
+};
+
+const createWorkItem = async (payload) => {
+  const params = [
+    payload.work_item_title,
+    payload.work_item_type,
+    payload.project_id,
+    payload.assigned_to_user_id,
+    payload.priority,
+    payload.due_date,
+    payload.work_item_description,
+    payload.created_by_user_id,
+  ];
+
+  const sql = `
+    CALL public.sp_create_work_item(
+      $1, $2, $3, $4, $5, $6, $7, $8
+    );
+  `;
+
+  const result = await query(sql, params);
+  const out = result.rows?.[0];
+
+  if (out && out.p_work_item_id) {
+    return await getWorkItemById(out.p_work_item_id);
+  }
+
+  return out || null;
+};
+
+const updateWorkItem = async (id, payload) => {
+  const params = [
+    id,
+    payload.work_item_title ?? null,
+    payload.work_item_type ?? null,
+    payload.project_id ?? null,
+    payload.assigned_to_user_id ?? null,
+    payload.priority ?? null,
+    payload.status ?? null,
+    payload.due_date ?? null,
+    payload.progress_percentage ?? null,
+    payload.work_item_description ?? null,
+    payload.comments ?? null,
+    payload.updated_by_user_id ?? null,
+  ];
+
+  const sql = `
+    CALL public.sp_update_work_item(
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+    );
+  `;
+
+  const result = await query(sql, params);
+  const out = result.rows?.[0];
+
+  if (out && out.p_status_out && out.p_status_out.toLowerCase() === "success") {
+    return await getWorkItemById(id);
+  }
+
+  return out || null;
+};
+
+const deleteWorkItem = async (id, deletedByUserId) => {
+  const sql = `
+    CALL public.sp_delete_work_item(
+      $1, $2
+    );
+  `;
+  const result = await query(sql, [id, deletedByUserId ?? null]);
+  return result.rows?.[0] || null;
+};
+
 module.exports = {
   // demand_planning code
   getAllState,
@@ -930,4 +1054,10 @@ module.exports = {
   getDsModelsFeatures,
   getDsModelMetrics,
   getFvaVsStats,
+  // work items
+  getWorkItems,
+  getWorkItemById,
+  createWorkItem,
+  updateWorkItem,
+  deleteWorkItem,
 };

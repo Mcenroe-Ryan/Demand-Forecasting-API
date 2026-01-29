@@ -36,7 +36,13 @@ const {
   getDsModels,
   getDsModelsFeatures,
   getDsModelMetrics,
-  getFvaVsStats
+  getFvaVsStats,
+  // work items
+  getWorkItems,
+  getWorkItemById,
+  createWorkItem,
+  updateWorkItem,
+  deleteWorkItem
 } = require("../service/masterService");
 
 const getAllStateData = async (req, res) => {
@@ -386,6 +392,84 @@ const getDemandForecastFullScreenController = async (req, res) => {
   }
 };
 
+const getWorkItemsController = async (req, res) => {
+  try {
+    const filters = req.query || {};
+    const data = await getWorkItems(filters);
+    res.json(data);
+  } catch (err) {
+    console.error("Work items fetch error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getWorkItemByIdController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await getWorkItemById(id);
+    if (!item) {
+      return res.status(404).json({ error: "Work item not found." });
+    }
+    res.json(item);
+  } catch (err) {
+    console.error("Work item fetch error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const createWorkItemController = async (req, res) => {
+  try {
+    const payload = req.body || {};
+    if (payload.project_id == null || !payload.work_item_title) {
+      return res.status(400).json({
+        error: "`project_id` and `work_item_title` are required.",
+      });
+    }
+
+    const created = await createWorkItem(payload);
+    res.status(201).json(created);
+  } catch (err) {
+    console.error("Work item create error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const updateWorkItemController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payload = req.body || {};
+    const updated = await updateWorkItem(id, payload);
+    if (!updated) {
+      return res.status(404).json({ error: "Work item not found or no updates." });
+    }
+    if (updated.p_status_out && updated.p_status_out.toLowerCase() !== "success") {
+      return res.status(400).json(updated);
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error("Work item update error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const deleteWorkItemController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deleted_by_user_id } = req.body || {};
+    const deleted = await deleteWorkItem(id, deleted_by_user_id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Work item not found." });
+    }
+    if (deleted.p_status && deleted.p_status.toLowerCase() !== "success") {
+      return res.status(400).json(deleted);
+    }
+    res.json({ success: true, result: deleted });
+  } catch (err) {
+    console.error("Work item delete error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getAllCountriesData,
   getAllStateData,
@@ -414,5 +498,11 @@ module.exports = {
   getDsModelData,
   getDsModelsFeaturesData,
   getDsModelMetricsData,
-  getFvaVsStatsData
+  getFvaVsStatsData,
+  // work items
+  getWorkItemsController,
+  getWorkItemByIdController,
+  createWorkItemController,
+  updateWorkItemController,
+  deleteWorkItemController
 };
