@@ -723,8 +723,6 @@ const getForecastAlertData = async (filters) => {
   if (filters.startDate && filters.endDate) {
     start_date = filters.startDate;
     end_date = filters.endDate;
-    console.log( filters.startDate);
-    console.log( filters.endDate);
   } else {
     const now = new Date();
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
