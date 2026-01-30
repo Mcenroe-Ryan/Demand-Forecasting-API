@@ -4,15 +4,16 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":"node server.js",
-    "start-inspect":"node --inspect server.js ",
-    "start-prod":"pm2 start pm2.config.js --env production"
+    "start": "node server.js",
+    "start-inspect": "node --inspect server.js ",
+    "start-prod": "pm2 start pm2.config.js --env production"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
     "compression": "^1.7.4",
@@ -24,6 +25,7 @@
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.0.1",
     "helmet": "^7.2.0",
+    "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
     "pg": "^8.16.0",
     "winston": "^3.17.0"
